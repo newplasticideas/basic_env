@@ -6,7 +6,7 @@ class OrderFulfillment
   # As a warehouse officer
   # I want to be able to initiate an order run
   # So that I can deliver orders according to my pending orders and inventory availability
-  attr_accessor :products, :orders
+  attr_accessor :products, :orders, :unfulfillable_orders
 
   def initialize
     self.products = get_products
@@ -18,23 +18,33 @@ class OrderFulfillment
   # If an order cannot be fulfilled due to low stock levels, it should not be fulfilled.
   # It should return an array of order ids that were unfulfillable.
   def process_orders order_ids
-    to_process = @orders.select {|order| order_ids.include? order.order_id && order.pending? }
+    to_process = orders.select {|order| order_ids.include?(order.order_id) && order.pending? }
+
     to_process.each do |order|
+      puts "processing order ##{order.order_id}"
       if order.unfulfillable
-         self.unfulfillable_orders << order
+        unfulfillable_orders << order
       else
-        order.process!
+        order.items.each do |item|
+          product = self.products.detect {|p| p.product_id == item.product_id}
+          self.products.each do |p|
+            if p.product_id == product.product_id
+              p.quantity_on_hand -= item.quantity
+            end
+          end
+          order.process
+        end
       end
     end
-    return self.unfulfillable_orders.map &:order_id
+    unfulfillable_orders.map &:order_id
   end
 
   def get_orders
-    self.class.database["orders"].map { |order| Order.new(order)}
+    self.class.database["orders"].map { |order| Order.new(order) }
   end
 
-  def get_orders
-    self.class.database["products"].map { |order| Product.new(order)}
+  def get_products
+    self.class.database["products"].map { |product| Product.new(product) }
   end
 
 

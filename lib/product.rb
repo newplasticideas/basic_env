@@ -1,4 +1,5 @@
 class Product
+  @@products = []
   attr_accessor :product_id, :description, :quantity_on_hand, :reorder_threshold, :reorder_amount, :delivery_lead_time
 
   def initialize(json)
@@ -8,9 +9,14 @@ class Product
     self.reorder_threshold  = json["reorderThreshold"]
     self.reorder_amount     = json["reorderAmount"]
     self.delivery_lead_time = json["deliveryLeadTime"]
+    @@products << self
   end
 
-  def out_of_stock
+  def out_of_stock?
     self.quantity_on_hand.zero?
+  end
+
+  def self.all
+    @@products
   end
 end

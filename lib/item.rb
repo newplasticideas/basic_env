@@ -1,3 +1,4 @@
+require_relative 'product'
 class Item
   # {
   #   "orderId": 1122,
@@ -12,11 +13,15 @@ class Item
     self.product_id = json["productId"]
     self.quantity = json["quantity"]
     self.cost_per_item = json["costPerItem"]
-    # self.product = 
+    self.product = Product.all.detect { |product| product.product_id == self.product_id }
   end
 
-  def out_of_stock
+  def insufficient_stock?
+    self.product.out_of_stock? || self.quantity > self.product.quantity_on_hand
+  end
 
+  def order_exceeds_product_threshold?
+    self.quantity > self.product.reorder_threshold
   end
 
 end
