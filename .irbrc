@@ -165,14 +165,3 @@ IRB.conf[:HISTORY_FILE] = "#{ENV['HOME']}/.irb-history"
       tr "A-Za-z", "N-ZA-Mn-za-m"
     end
   end
-
-# ---------------------------------------
-#  Hirb - Pretty ActiveRecord tables in a
-#         mysql console table view.
-# ---------------------------------------
-  begin
-    require 'hirb'
-    Hirb.enable
-  rescue LoadError => err
-    warn "Couldn't load Hirb: #{err}"
-  end
