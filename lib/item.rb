@@ -6,7 +6,7 @@ class Item
   #   "quantity": 4,
   #   "costPerItem": 10.45
   # },
-  attr_accessor :order_id, :product_id, :quantity, :cost_per_item, :product
+  attr_accessor :order_id, :product_id, :quantity, :cost_per_item, :product, :error
 
   def initialize json
     self.order_id = json["orderId"]
@@ -16,8 +16,16 @@ class Item
     self.product = Product.all.detect { |product| product.product_id == self.product_id }
   end
 
-  def insufficient_stock?
-    self.product.out_of_stock? || self.quantity > self.product.quantity_on_hand
+  def unprocessable?
+    if self.product.out_of_stock?
+      @error = "#{self.product.description} is out of stock"
+      return true
+    elsif self.quantity > self.product.quantity_on_hand
+      @error = "not enough stock available for quantity of #{self.product.description} requested."
+      return true
+    else
+      return false
+    end
   end
 
   def order_exceeds_product_threshold?

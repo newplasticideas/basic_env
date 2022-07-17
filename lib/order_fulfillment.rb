@@ -18,33 +18,44 @@ class OrderFulfillment
   # If an order cannot be fulfilled due to low stock levels, it should not be fulfilled.
   # It should return an array of order ids that were unfulfillable.
   def process_orders order_ids
-    to_process = orders.select {|order| order_ids.include?(order.order_id) && order.pending? }
+    unfulfillable_orders = []
+    to_process = self.orders.select {|order| order_ids.include?(order.order_id) && order.pending? }
+
+    return "order not found" if to_process.empty?
 
     to_process.each do |order|
       puts "processing order ##{order.order_id}"
-      if order.unfulfillable
+      if order.unfulfillable?
+        puts "order ##{order.order_id} could not be fulfilled. #{order.items.map(&:error).compact.join}"
+        order.mark_unfulfillable
         unfulfillable_orders << order
       else
         order.items.each do |item|
           product = self.products.detect {|p| p.product_id == item.product_id}
+          puts "#{product.description} found, ##{product.quantity_on_hand} left in stock. processing..."
           self.products.each do |p|
+            # i don't think creating a new variable from the relevant product would persist any changes,
+            # so I have to loop through the data on self.
             if p.product_id == product.product_id
+              puts "reducing #{p.description} availability by #{item.quantity}"
               p.quantity_on_hand -= item.quantity
+              puts "#{p.quantity_on_hand} left on hand."
             end
           end
-          order.process
         end
+        order.process
+        puts "order ##{order.order_id} processed!"
       end
     end
     unfulfillable_orders.map &:order_id
   end
 
   def get_orders
-    self.class.database["orders"].map { |order| Order.new(order) }
+    @orders ||= self.class.database["orders"].map { |order| Order.new(order) }
   end
 
   def get_products
-    self.class.database["products"].map { |product| Product.new(product) }
+    @products ||= self.class.database["products"].map { |product| Product.new(product) }
   end
 
 

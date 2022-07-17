@@ -36,7 +36,11 @@ class Order
   state_machine :status, initial: :pending do
 
     event :process do
-      transition :pending => :fulfilled, unless: :unfulfillable
+      transition :pending => :fulfilled
+    end
+
+    event :mark_unfulfillable do
+      transition :pending => :unfulfillable
     end
 
     # after_transition :pending => :fulfilled do |order, _transition, block|
@@ -47,8 +51,8 @@ class Order
     # end
   end
 
-  def unfulfillable
-    self.items.any? &:insufficient_stock?
+  def unfulfillable?
+    self.items.any? &:unprocessable?
   end
 
   def product_ids

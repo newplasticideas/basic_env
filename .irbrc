@@ -165,3 +165,11 @@ IRB.conf[:HISTORY_FILE] = "#{ENV['HOME']}/.irb-history"
       tr "A-Za-z", "N-ZA-Mn-za-m"
     end
   end
+
+require './lib/product'
+require_relative './lib/order'
+require_relative './lib/item'
+require_relative './lib/order_fulfillment'
+
+@client ||= OrderFulfillment.new
+@order_ids ||= @client.get_orders.map &:order_id
